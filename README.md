@@ -153,3 +153,6 @@ slm.updateArray(testIMG)
 time.sleep(0.05)
 slm.close()
 ```
+
+## Other example
+
