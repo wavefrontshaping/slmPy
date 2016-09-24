@@ -156,3 +156,4 @@ slm.close()
 
 ## Other example
 
+[**python-SLM**](https://github.com/totesalaz/python-SLM), written by Luis [José Salazar-Serrano](http://www.opensourcelab.salazarserrano.com/), is good example of the use of this **slmPy** to generate the phase masks to create Laguerre Gauss beams with a SLM. 
