@@ -17,7 +17,6 @@ The **SLMdisplay** class of the slmpy module creates a frame (window) that is co
 * A Python distribution under Linux or Windows (I did not test Mac OS, there may be issues),
 * The wxPython module available from [here](http://www.wxpython.org/),
 * An SLM with a VGA/HDMI/DVI cable,
-* The slmpy.py code attached to this article (bottom of the page).
 
 ## Usage
 
