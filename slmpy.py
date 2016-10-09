@@ -105,9 +105,9 @@ class SLMdisplay:
         event.img = img
         event.eventLock = self.eventLock
         
-        # Wait for the lock to be resleased (if isImageLock = True)
-        # to be sure that the previous is image has been displayed
-        # before displaying the next one - avoids skipping inmages
+        # Wait for the lock to be released (if isImageLock = True)
+        # to be sure that the previous image has been displayed
+        # before displaying the next one - it avoids skipping images
         if (self.isImageLock):
             event.eventLock.acquire()
         # Trigger the event (update image)
