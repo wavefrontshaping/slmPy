@@ -29,7 +29,7 @@ class ImageEvent(wx.PyCommandEvent):
         
 class SLMframe(wx.Frame):
     """Frame used to display full screen image."""
-    def __init__(self, monitor = 1, isImageLock = True):   
+    def __init__(self, monitor, isImageLock = True):   
         self.isImageLock = isImageLock
         # Create the frame
         #wx.Frame.__init__(self,None,-1,'SLM window',pos = (self._x0, self._y0), size = (self._resX, self._resY)) 
@@ -73,6 +73,7 @@ class SLMdisplay:
     """Interface for sending images to the display frame."""
     def __init__(self ,monitor = 1, isImageLock = False):       
         self.isImageLock = isImageLock            
+        self.monitor = monitor
         # Create the thread in which the window app will run
         # It needs its thread to continuously refresh the window
         self.vt =  videoThread(self)      
@@ -132,7 +133,7 @@ class videoThread(threading.Thread):
             self.start() #automatically start thread on init
     def run(self):
         app = wx.App()
-        frame = SLMframe(isImageLock = self.parent.isImageLock)
+        frame = SLMframe(monitor = self.parent.monitor, isImageLock = self.parent.isImageLock)
         frame.Show(True)
         self.frame = frame
         self.lock.release()
@@ -143,8 +144,3 @@ class videoThread(threading.Thread):
         self.start_orig()
         # Use lock to wait for the functions to get defined
         self.lock.acquire()
-
-
-    
-
-
