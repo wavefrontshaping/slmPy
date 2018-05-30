@@ -93,6 +93,7 @@ Check the following example with isImageLock = True or IsImageLock = False. The 
 
 ```python
 import slmpy
+import numpy as np
 import time
 slm = slmpy.SLMdisplay(isImageLock = False)
 resX, resY = slm.getSize()
