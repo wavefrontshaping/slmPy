@@ -16,7 +16,7 @@ The **SLMdisplay** class of the slmpy module creates a frame (window) that is co
 
 * A Python distribution under Linux or Windows (I did not test Mac OS, there may be issues),
 * The wxPython module available from [here](http://www.wxpython.org/),
-* An SLM with a VGA/HDMI/DVI cable,
+* An SLM with a VGA/HDMI/DVI cable.
 
 ## Usage
 
@@ -81,7 +81,7 @@ In the previous example we were careful to create an image with the same resolut
 
 #### Image lock
 
-In SLM experiments, it is common to display images in a loop. What will happen if the mage does not have the time to be displayed between two iterations of the loop? In some cases, you want to be sure that the image is sent usin updateArray() before going further, in order to measure its effect for example, but in some cases, you do not want to loose sync, even if it means skipping images. You can control that with the imageLock parameter.
+In SLM experiments, it is common to display images in a loop. What will happen if the image does not have the time to be displayed between two iterations of the loop? In some cases, you want to be sure that the image is sent usin updateArray() before going further, in order to measure its effect for example, but in some cases, you do not want to loose sync, even if it means skipping images. You can control that with the imageLock parameter.
 
 ```python
 slm = slmpy.SLMdisplay(isImageLock = True)
