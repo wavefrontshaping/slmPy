@@ -81,7 +81,7 @@ In the previous example we were careful to create an image with the same resolut
 
 #### Image lock
 
-In SLM experiments, it is common to display images in a loop. What will happen if the image does not have the time to be displayed between two iterations of the loop? In some cases, you want to be sure that the image is sent usin updateArray() before going further, in order to measure its effect for example, but in some cases, you do not want to loose sync, even if it means skipping images. You can control that with the imageLock parameter.
+In SLM experiments, it is common to display images in a loop. What will happen if the image does not have the time to be displayed between two iterations of the loop? In some cases, you want to be sure that the image is displayed on the SLM using updateArray() before going further, in order to measure its physical effect for example. In some other cases, you do not want to loose sync, even if it means skipping images. You can control that with the imageLock parameter.
 
 ```python
 slm = slmpy.SLMdisplay(isImageLock = True)
@@ -89,7 +89,9 @@ slm = slmpy.SLMdisplay(isImageLock = True)
 
 If isImageLock is set to True, the program will wait for the image to be displayed before returning from the updateArray() function. If it is set to False, it will not. By default, isImageLock is True.
 
-Check the following example with isImageLock = True or IsImageLock = False. The code sent 100 times the same blank image on the screen, the image does not change not to spend too much computational time treating the data array. You will notice that the time spent in the loop without the image can be faster than the actual refresh rate of the monitor if isImageLock is set to False.
+Check the following example with isImageLock = True or IsImageLock = False. The code sends 100 times the same blank image on the screen. We use the same image not to spend too much computational time treating the data array. You will notice that the time spent in the loop can be faster than the actual refresh rate of the monitor if isImageLock is set to False, meaning that the program will actually only send an image much less than 100 times. If isImageLock = True, the program will send exactly 100 times the image. The total time spent in the loop will then be at least 100 times the refresh time. 
+
+Note that the refresh time considered here is due to the transfer protocol, the actual response time of the liquid crystal display can be slower.  
 
 ```python
 import slmpy
