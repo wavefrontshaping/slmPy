@@ -8,7 +8,7 @@ Created on Sun Dec 06 20:14:02 2015
 try:
     import wx
 except ImportError:
-    raise ImportError,"The wxPython module is required to run this program."
+    raise(ImportError,"The wxPython module is required to run this program.")
 import threading
 import numpy as np
 
