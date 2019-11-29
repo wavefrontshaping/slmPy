@@ -11,6 +11,7 @@ except ImportError:
     raise(ImportError,"The wxPython module is required to run this program.")
 import threading
 import numpy as np
+import time
 
 
 
@@ -111,6 +112,8 @@ class SLMdisplay:
         # before displaying the next one - it avoids skipping images
         if (self.isImageLock):
             event.eventLock.acquire()
+        # Wait (can bug when closing/opening the SLM too quickly otherwise)
+        time.sleep(0.5)
         # Trigger the event (update image)
         self.vt.frame.AddPendingEvent(event)
         
