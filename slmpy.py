@@ -8,7 +8,7 @@ Created on Sun Dec 06 20:14:02 2015
 try:
     import wx
 except ImportError:
-    raise(ImportError,"The wxPython module is required to run this program.")
+    raise ImportError("The wxPython module is required to run this program.")
 import threading
 import numpy as np
 import time
@@ -33,11 +33,11 @@ class SLMframe(wx.Frame):
     def __init__(self, monitor, isImageLock = True):   
         self.isImageLock = isImageLock
         # Create the frame
-        #wx.Frame.__init__(self,None,-1,'SLM window',pos = (self._x0, self._y0), size = (self._resX, self._resY)) 
         self.SetMonitor(monitor)
         # Set the frame to the position and size of the target monito
-        wx.Frame.__init__(self,None,-1,'SLM window',pos = (self._x0, self._y0), size = (self._resX, self._resY)) 
-        self.img = wx.EmptyImage(2,2)
+        # wx.Frame.__init__(self,None,-1,'SLM window',pos = (self._x0, self._y0), size = (self._resX, self._resY)) 
+        super().__init__(None,-1,'SLM window',pos = (self._x0, self._y0), size = (self._resX, self._resY)) 
+        self.img = wx.Image(2,2)
         self.bmp = self.img.ConvertToBitmap()
         self.clientSize = self.GetClientSize()
         # Update the image upon receiving an event EVT_NEW_IMAGE
