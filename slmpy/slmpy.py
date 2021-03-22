@@ -85,13 +85,15 @@ class SLMdisplay:
     def getSize(self):
         return self.vt.frame._resX, self.vt.frame._resY
 
-    def updateArray(self, array):
+    def updateArray(self, array, sleep = 0.2):
         """
         Update the SLM monitor with the supplied array.
         Note that the array is not the same size as the SLM resolution,
         the image will be deformed to fit the screen.
+        array: numpy array to display, should be the same size as the resolution of the SLM.
+        sleep: pause in seconds after displaying an image.
         """
-        #create a wx.Image from the array
+        # create a wx.Image from the array
         h,w = array.shape[0], array.shape[1]
 
         if len(array.shape) == 2:
@@ -113,7 +115,7 @@ class SLMdisplay:
         if (self.isImageLock):
             event.eventLock.acquire()
         # Wait (can bug when closing/opening the SLM too quickly otherwise)
-        time.sleep(0.5)
+        time.sleep(sleep)
         # Trigger the event (update image)
         self.vt.frame.AddPendingEvent(event)
         
