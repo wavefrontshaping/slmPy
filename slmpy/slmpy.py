@@ -12,6 +12,9 @@ except ImportError:
 import threading
 import numpy as np
 import time
+import socket
+# from io import BytesIO
+
 
 
 
@@ -68,8 +71,53 @@ class SLMframe(wx.Frame):
         if (monitor < 0 or monitor > wx.Display.GetCount()-1):
             raise ValueError('Invalid monitor (monitor %d).' % monitor)
         self._x0, self._y0, self._resX, self._resY = wx.Display(monitor).GetGeometry()
-        
+ 
+class Client():
+    """Client class to interact with slmPy running on a distant server."""
+    def __init__(self):
+        pass
 
+    def start(self, server_address, port = 9999):
+        self.client_socket=socket.socket()
+        try:
+            self.client_socket.connect((server_address, port))
+            print(f'Connected to {server_address} on {port}')
+        except socket.error as e:
+            print(f'Connection to {server_address} on port {port} failed: {e}')
+            return
+
+    def sendArray(self, arr, timeout = 10):
+        if not isinstance(arr, np.ndarray):
+            print('Not a valid numpy image')
+            return
+        if not arr.dtype == np.uint8:
+            print('Numpy array should be of uint8 type')
+        self.client_socket.sendall(arr.tostring())
+        self.client_socket.sendall(b'\n')
+        print('Waiting for reply from the server')
+
+        t0 = time.time()
+        while True:
+            buffer = self.client_socket.recv(128)
+            if buffer:
+                print(buffer.decode())
+            if buffer and buffer.decode() == 'done':
+                print('Data transmitted')
+                return 1
+            elif time.time()-t0 > timeout:
+                print('Timeout reached.')
+                return -1
+            
+        
+    def stopServer(self):
+        time.sleep(0.5)
+        self.client_socket.sendall(b'\r')
+        
+    def close(self):
+        self.stopServer()
+        self.client_socket.shutdown(1)
+        self.client_socket.close()
+        
 class SLMdisplay:
     """Interface for sending images to the display frame."""
     def __init__(self ,monitor = 1, isImageLock = False):       
@@ -81,6 +129,47 @@ class SLMdisplay:
         self.eventLock = threading.Lock()
         if (self.isImageLock):
             self.eventLock = threading.Lock()
+            
+    def listen_port(self, port = 9999):
+        """
+        Liston to a port for data transmission.
+        Update the SLM with the array transmitted.
+        Use a `Client` abject to send arrays from a client. 
+        """
+        server_socket=socket.socket() 
+        server_socket.bind(('',port))
+        server_socket.listen(1)
+        print(f'waiting for a connection on port {port}')
+        client_connection,client_address=server_socket.accept()
+        print(f'connected to {client_address[0]}')
+        data=b''
+        while True:
+            buffer = client_connection.recv(4096)
+            data+= buffer
+            if not buffer or buffer == b'\r': #
+                print('Closing connection')
+                break
+            elif buffer and buffer[-1] == 10: # 10 is \n
+                pass
+            else:
+                continue
+            # empty buffer
+            data = b''
+    
+            resX, resY = self.vt.frame._resX, self.vt.frame._resY
+            if not len(buffer) == resX*resY:
+                print('Buffer size does not match image size')
+                client_connection.sendall(b'done')
+                continue
+              
+            print('Received image')
+            image=np.fromstring(data[:-1], dtype=np.uint8).reshape([resY,resX])
+            print('Updating SLM')
+            slm.updateArray(image)
+            client_connection.sendall(b'done')
+
+        client_connection.close()
+        server_socket.close()
         
     def getSize(self):
         return self.vt.frame._resX, self.vt.frame._resY
