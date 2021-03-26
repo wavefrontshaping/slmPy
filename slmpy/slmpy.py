@@ -3,6 +3,9 @@
 Created on Sun Dec 06 20:14:02 2015
 
 @author: Sebastien Popoff
+
+inspired by:
+https://wiki.wxpython.org/MainLoopAsThread
 """
 
 try:
@@ -13,6 +16,8 @@ import threading
 import numpy as np
 import time
 import socket
+import pickle
+import struct
 # from io import BytesIO
 
 
@@ -78,7 +83,7 @@ class Client():
         pass
 
     def start(self, server_address, port = 9999):
-        self.client_socket=socket.socket()
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.client_socket.connect((server_address, port))
             print(f'Connected to {server_address} on {port}')
@@ -86,24 +91,41 @@ class Client():
             print(f'Connection to {server_address} on port {port} failed: {e}')
             return
 
+    def send_numpy_array(self, np_array):
+        """
+        :param np_array: Numpy array to send to the listening socket
+        :type np_array: ndarray
+        :return: None
+        :rtype: None
+        """
+        data = pickle.dumps(np_array)
+
+        # Send message length first
+        message_size = struct.pack("L", len(data))  
+
+        # Then data
+        self.client_socket.sendall(message_size + data)
+        
     def sendArray(self, arr, timeout = 10):
         if not isinstance(arr, np.ndarray):
             print('Not a valid numpy image')
             return
         if not arr.dtype == np.uint8:
             print('Numpy array should be of uint8 type')
-        self.client_socket.sendall(arr.tostring())
-        self.client_socket.sendall(b'\n')
+
+        self.send_numpy_array(arr)
         print('Waiting for reply from the server')
 
         t0 = time.time()
         while True:
             buffer = self.client_socket.recv(128)
-            if buffer:
-                print(buffer.decode())
             if buffer and buffer.decode() == 'done':
                 print('Data transmitted')
                 return 1
+            elif buffer and buffer.decode() == 'err':
+                print('Error. Data not transmitted')
+                print('Wrong image size?')
+                return -1
             elif time.time()-t0 > timeout:
                 print('Timeout reached.')
                 return -1
@@ -141,32 +163,42 @@ class SLMdisplay:
         server_socket.listen(1)
         print(f'waiting for a connection on port {port}')
         client_connection,client_address=server_socket.accept()
-        print(f'connected to {client_address[0]}')
-        data=b''
+        print(f'connected to {client_address[0]}')      
+        
+        payload_size = struct.calcsize("L") 
+        
         while True:
-            buffer = client_connection.recv(4096)
-            data+= buffer
-            if not buffer or buffer == b'\r': #
-                print('Closing connection')
-                break
-            elif buffer and buffer[-1] == 10: # 10 is \n
-                pass
-            else:
-                continue
-            # empty buffer
-            data = b''
-    
-            resX, resY = self.vt.frame._resX, self.vt.frame._resY
-            if not len(buffer) == resX*resY:
-                print('Buffer size does not match image size')
-                client_connection.sendall(b'done')
-                continue
-              
+            data=b''
+            while len(data) < payload_size:
+                data += client_connection.recv(4096)
+
+            packed_msg_size = data[:payload_size]
+            data = data[payload_size:]
+            msg_size = struct.unpack("L", packed_msg_size)[0]
+
+            # Retrieve all data based on message size
+            while len(data) < msg_size:
+                data += client_connection.recv(4096)
+
+            frame_data = data[:msg_size]
+            data = data[msg_size:]
+
+            # Extract frame
             print('Received image')
-            image=np.fromstring(data[:-1], dtype=np.uint8).reshape([resY,resX])
+            image = pickle.loads(frame_data)
+                      
+            resX, resY = self.vt.frame._resX, self.vt.frame._resY
+            if not image.shape == (resY,resX):
+                print('Buffer size does not match image size')
+                print(f'Expected {(resY,resX)}, received: {image.shape}')
+                client_connection.sendall(b'err')
+                continue
+            
+            
             print('Updating SLM')
-            slm.updateArray(image)
+            self.updateArray(image)
             client_connection.sendall(b'done')
+
 
         client_connection.close()
         server_socket.close()
