@@ -2,10 +2,8 @@
 """
 Created on Sun Dec 06 20:14:02 2015
 
-@author: Sebastien Popoff
+@author: Sebastien M. Popoff
 
-inspired by:
-https://wiki.wxpython.org/MainLoopAsThread
 """
 
 try:
@@ -16,13 +14,7 @@ import threading
 import numpy as np
 import time
 import socket
-import pickle
 import struct
-# from io import BytesIO
-
-
-
-
 
 
 EVT_NEW_IMAGE = wx.PyEventBinder(wx.NewEventType(), 0)
@@ -117,96 +109,6 @@ class SLMwindow(wx.Window):
                 self.eventLock.release()
 
     
-# class SLMframe(wx.Frame):
-    
-#     """Frame used to display full screen image."""
-#     def __init__(self, monitor, isImageLock = True):   
-#         self.isImageLock = isImageLock
-#         # Create the frame
-#         self.SetMonitor(monitor)
-#         # Set the frame to the position and size of the target monitor
-# #         super().__init__(None,
-# #                          -1,
-# #                          'SLM window',
-# #                          pos = (self._x0, self._y0), 
-# #                          size = (self._resX, self._resY)
-# #                         ) 
-#         self.img = wx.Image(2,2)
-#         self.bmp = self.img.ConvertToBitmap()
-#         self.clientSize = self.GetClientSize()
-#         # Update the image upon receiving an event EVT_NEW_IMAGE
-#         self.Bind(EVT_NEW_IMAGE, self.UpdateImage)
-#         wx.EVT_SIZE(self, self.OnSize)
-#         # to limit flickering
-#         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnErase)
-#         # for double buffering
-#         self._Buffer = wx.Bitmap(self._resX, self._resY)
-# #         self.buffer = wx.EmptyBitmap(self._resX, self._resY)
-# #         self.backbuffer = wx.EmptyBitmap(self._resX, self._resY)
-#         # Set full screen
-#         self.ShowFullScreen(not self.IsFullScreen(), wx.FULLSCREEN_ALL)
-#         self.SetFocus()
-
-        
-#     def OnErase(self, evt):
-#         pass
-    
-#     def Quit(self):
-#         wx.CallAfter(self.Destroy)
-
-#     def OnSize(self,event):
-#         # The Buffer init is done here, to make sure the buffer is always
-#         # the same size as the Window
-#         Size  = self.ClientSize
-
-#         # Make new offscreen bitmap: this bitmap will always have the
-#         # current drawing in it, so it can be used to save the image to
-#         # a file, or whatever.
-#         self._Buffer = wx.EmptyBitmap(*Size)
-
-
-#     def InitBuffer(self):
-#         #self.clientSize = self.GetClientSize()
-#         #self.bmp = self.img.Scale(self.clientSize[0], self.clientSize[1]).ConvertToBitmap()
-#         self.bmp = self.img.ConvertToBitmap()
-        
-# #         dc = wx.MemoryDC()
-# #         dc.SelectObject(self.backbuffer)
-        
-# #         dc = wx.ClientDC(self)
-# #         dc = wx.MemoryDC()
-# #         dc.SelectObject(self._Buffer)
-#         self._Buffer = self.img.ConvertToBitmap()
-# #         dc = wx.BufferedPaintDC(self, self._Buffer)
-#         dc = wx.PaintDC(self)
-#         dc.DrawBitmap(self._Buffer, 0, 0)
-#     #         dc.Clear()
-    
-# #         dc.DrawBitmap(self.bmp,0,0)
-# #         self.Flip()
-# #         del dc
-# #         dc = wx.BufferedPaintDC(self, self.buffer)
-        
-        
-
-
-        
-#     def UpdateImage(self, event):
-#         self.eventLock = event.eventLock
-#         self.img = event.img
-#         self.InitBuffer()
-#         self.ReleaseEventLock()
-        
-#     def ReleaseEventLock(self):
-#         if self.eventLock:
-#             if self.eventLock.locked():
-#                 self.eventLock.release()
-        
-#     def SetMonitor(self, monitor):
-#         if (monitor < 0 or monitor > wx.Display.GetCount()-1):
-#             raise ValueError('Invalid monitor (monitor %d).' % monitor)
-#         self._x0, self._y0, self._resX, self._resY = wx.Display(monitor).GetGeometry()
- 
 class Client():
     """Client class to interact with slmPy running on a distant server."""
     def __init__(self):
@@ -228,7 +130,6 @@ class Client():
         :return: None
         :rtype: None
         """
-#         data = pickle.dumps(np_array, protocol = 1)
         data = np_array.tostring()
 
         # Send message length first
@@ -236,7 +137,7 @@ class Client():
         # size on different systems (4 on raspberry pi!)
         message_size = struct.pack("i", len(data)) 
 
-        # Then data
+        # Then send data
         self.client_socket.sendall(message_size + data)
         
     def sendArray(self, arr, timeout = 10):
@@ -285,11 +186,21 @@ class SLMdisplay:
         if (self.isImageLock):
             self.eventLock = threading.Lock()
             
-    def listen_port(self, port = 9999):
+    def listen_port(self, port = 9999, check_image_size = False):
         """
         Liston to a port for data transmission.
         Update the SLM with the array transmitted.
         Use a `Client` abject to send arrays from a client. 
+        
+        Parameters
+        ----------
+        port : int
+            The port to listen to and receive the data from.
+        check_image_size : bool
+            If `check_image_size` is True, an image that does not fit
+            the resolution of the SLM will not be displayed and an 
+            error will be returned to the client.
+
         """
         server_socket=socket.socket() 
         server_socket.bind(('',port))
@@ -298,7 +209,6 @@ class SLMdisplay:
         client_connection,client_address=server_socket.accept()
         print(f'connected to {client_address[0]}')      
         
-        #payload_size = PAYLOAD_SIZE
         payload_size = struct.calcsize("i") 
         print(f'Payload size = {payload_size}') 
         while True:
@@ -322,7 +232,7 @@ class SLMdisplay:
             image = np.frombuffer(frame_data, dtype = np.uint8)
 
             resX, resY = self.vt.frame._resX, self.vt.frame._resY
-            if not len(image) == resY*resX:
+            if check_image_size and not len(image) == resY*resX:
                 print('Buffer size does not match image size')
                 print(f'Expected {resX*resY}, received: {len(image)}')
                 client_connection.sendall(b'err')
@@ -378,7 +288,10 @@ class SLMdisplay:
          self.vt.frame.Quit()
 
 class videoThread(threading.Thread):
-    """Run the MainLoop as a thread. Access the frame with self.frame."""
+    """Run the MainLoop as a thread. 
+    WxPython is not designed for that, it will give a warning on exit, but it will work, 
+    see: https://wiki.wxpython.org/MainLoopAsThread
+    Access the frame with self.frame."""
     def __init__(self, parent,autoStart=True):
         threading.Thread.__init__(self)
         self.parent = parent
