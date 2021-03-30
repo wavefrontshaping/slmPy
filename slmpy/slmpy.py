@@ -206,7 +206,8 @@ class SLMdisplay:
     def listen_port(self, 
                     port = 9999, 
                     check_image_size = False,
-                    compression = True):
+                    compression = True,
+                    timeout = 10.):
         """
         Liston to a port for data transmission.
         Update the SLM with the array transmitted.
@@ -233,6 +234,7 @@ class SLMdisplay:
         print(f'Payload size = {payload_size}') 
         while True:
             data=b''
+            t0 = time.time()
             while len(data) < payload_size:
                 data += client_connection.recv(4096)
 
@@ -258,6 +260,10 @@ class SLMdisplay:
             if check_image_size and not len(image) == resY*resX:
                 print('Buffer size does not match image size')
                 print(f'Expected {resX*resY}, received: {len(image)}')
+                client_connection.sendall(b'err')
+                continue
+            if time.time()-t0 > timeout:
+                print('Timeout!')
                 client_connection.sendall(b'err')
                 continue
             
