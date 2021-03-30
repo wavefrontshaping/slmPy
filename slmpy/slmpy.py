@@ -82,6 +82,10 @@ class SLMwindow(wx.Window):
         kwargs['style'] = kwargs.setdefault('style', wx.NO_FULL_REPAINT_ON_RESIZE) | wx.NO_FULL_REPAINT_ON_RESIZE
         super().__init__(*args, **kwargs)
         
+        # hide cursor
+        cursor = wx.StockCursor(wx.CURSOR_BLANK)
+        self.SetCursor(cursor) 
+        
         self.img = wx.Image(*self.res)
         self._Buffer = wx.Bitmap(*self.res)
         self.Bind(wx.EVT_SIZE, self.OnSize)
