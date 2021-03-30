@@ -4,7 +4,9 @@ import time
 PORT = 9999 
 
 ## initialize SLM
-slm = SLMdisplay(monitor = 0, isImageLock = True)
+slm = SLMdisplay(monitor = 0, 
+                 isImageLock = True,
+                 alwaysTop = True)
 resX, resY = slm.getSize()
 print(f'Resolution: {resX}x{resY}')
 slm.listen_port(port = PORT)
