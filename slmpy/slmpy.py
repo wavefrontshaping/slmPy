@@ -17,6 +17,7 @@ import socket
 import struct
 import bz2
 import zlib
+import gzip
 
 
 EVT_NEW_IMAGE = wx.PyEventBinder(wx.NewEventType(), 0)
@@ -146,6 +147,8 @@ class Client():
              data = bz2.compress(data)
         elif self.compression == 'zlib':
              data = zlib.compress(data)
+        elif self.compression == 'gzip':
+             data = gzip.compress(data)
 
         # Send message length first
         # using "i" cause "L" for unsigned long does not have the same
@@ -255,6 +258,8 @@ class SLMdisplay:
                 frame_data = bz2.decompress(frame_data)
             elif compression == 'zlib':
                 frame_data = zlib.decompress(frame_data)
+            elif compression == 'gzip':
+                frame_data = gzip.decompress(frame_data)
                 
             # Extract frame
             print('Received image')
