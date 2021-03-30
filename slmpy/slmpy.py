@@ -30,7 +30,14 @@ class ImageEvent(wx.PyCommandEvent):
 
 class SLMframe(wx.Frame):
     
-    def __init__(self, monitor, isImageLock = True):
+    def __init__(self, 
+                 monitor, 
+                 isImageLock,
+                 alwaysTop):
+        
+        style = wx.DEFAULT_FRAME_STYLE
+        if alwaysTop:
+            style = style | wx.STAY_ON_TOP
         self.isImageLock = isImageLock
         self.SetMonitor(monitor)
         super().__init__(None,
@@ -38,7 +45,7 @@ class SLMframe(wx.Frame):
                          'SLM window',
                          pos = (self._x0, self._y0), 
                          size = (self._resX, self._resY),
-                         style = wx.DEFAULT_FRAME_STYLE
+                         style = style
                         ) 
         
         self.Window = SLMwindow(self, 
@@ -176,8 +183,12 @@ class Client():
         
 class SLMdisplay:
     """Interface for sending images to the display frame."""
-    def __init__(self ,monitor = 1, isImageLock = False):       
-        self.isImageLock = isImageLock            
+    def __init__(self,
+                 monitor = 1, 
+                 isImageLock = False,
+                 alwaysTop = False):       
+        self.isImageLock = isImageLock    
+        self.alwaysTop = alwaysTop
         self.monitor = monitor
         # Create the thread in which the window app will run
         # It needs its thread to continuously refresh the window
@@ -306,7 +317,9 @@ class videoThread(threading.Thread):
             self.start() #automatically start thread on init
     def run(self):
         app = wx.App()
-        frame = SLMframe(monitor = self.parent.monitor, isImageLock = self.parent.isImageLock)
+        frame = SLMframe(monitor = self.parent.monitor, 
+                         isImageLock = self.parent.isImageLock,
+                         alwaysTop = self.parent.alwaysTop)
         frame.Show(True)
         self.frame = frame
         self.lock.release()
