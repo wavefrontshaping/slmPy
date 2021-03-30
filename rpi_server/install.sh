@@ -14,11 +14,11 @@ echo "Installing wxPython dependencies"
 sudo apt install python3-wxgtk4.0 -y
 
 echo "Installing wxPython"
-sudo python3 -m pip install wxPython
+sudo python3.7 -m pip install wxPython
 
 
 echo "Installing SlmPy"
-sudo python3 setup.py install 
+sudo python3.7 setup.py install 
 
 echo "Copying server script that listens to port 9999 and display the received masks on the SLM" 
 cp rpi_server/server.py /home/pi/
@@ -36,4 +36,6 @@ sudo bash -c 'echo -e "\n[SeatDefaults]\nxserver-command=X -s 0 -dpms" >> /etc/l
 echo "Changing resolution to "$RESOLUTION
 export DISPLAY=:0
 xrandr --output HDMI-1 --mode $RESOLUTION
+
+echo "Rebooting"
 sudo reboot

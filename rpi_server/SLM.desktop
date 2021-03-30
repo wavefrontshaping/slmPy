@@ -1,5 +1,5 @@
 [Desktop Entry]
 Encoding=UTF-8
 Name= SLM
-Exec=/usr/bin/python3 /home/pi/server.py
+Exec=/usr/bin/python3.7 /home/pi/server.py
 Terminal=true
