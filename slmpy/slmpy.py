@@ -128,7 +128,10 @@ class Client():
     def __init__(self):
         pass
 
-    def start(self, server_address, port = 9999, compression = 'zlib'):
+    def start(self, 
+              server_address, 
+              port = 9999, 
+              compression = 'zlib'):
         """
         Parameters
         ----------
@@ -178,7 +181,10 @@ class Client():
         # Then send data
         self.client_socket.sendall(message_size + data)
         
-    def sendArray(self, arr, timeout = 10):
+    def sendArray(self, 
+                  arr, 
+                  timeout = 10,
+                  retries = 2):
         """
         Send a numpy array to the connected socket.
         
@@ -188,6 +194,8 @@ class Client():
             Numpy array to send to the server.
         timeout : int, default 10
             Timeout in seconds.
+        retries : int, default 2
+            Number of times to try sending data if an error occurs.
         """
         if not isinstance(arr, np.ndarray):
             print('Not a valid numpy image')
@@ -195,22 +203,25 @@ class Client():
         if not arr.dtype == np.uint8:
             print('Numpy array should be of uint8 type')
 
-        self._send_numpy_array(arr)
-        print('Waiting for reply from the server')
-
-        t0 = time.time()
-        while True:
-            buffer = self.client_socket.recv(128)
-            if buffer and buffer.decode() == 'done':
-                print('Data transmitted')
-                return 1
-            elif buffer and buffer.decode() == 'err':
-                print('Error. Data not transmitted')
-                print('Wrong image size?')
-                return -1
-            elif time.time()-t0 > timeout:
-                print('Timeout reached.')
-                return -1
+        for retry in range(retries):
+            self._send_numpy_array(arr)
+            t0 = time.time()
+            if retry:
+                print('Retrying')
+            while True:
+                buffer = self.client_socket.recv(128)
+                if buffer and buffer.decode() == 'done':
+                    print('Data transmitted')
+                    return 1
+                elif buffer and buffer.decode() == 'err':
+                    print('Error. Data not transmitted')
+                    print('Wrong image size?')
+                    break
+                elif time.time()-t0 > timeout:
+                    print('Timeout reached.')
+                    break
+        else:
+            return -1
         
     def close(self):
         self.stopServer()
