@@ -15,6 +15,7 @@ import numpy as np
 import time
 import socket
 import struct
+import bz2
 
 
 EVT_NEW_IMAGE = wx.PyEventBinder(wx.NewEventType(), 0)
@@ -73,7 +74,7 @@ class SLMframe(wx.Frame):
         
 class SLMwindow(wx.Window):
     
-    def __init__(self,  *args, **kwargs):#isImageLock, res,  **kwargs): 
+    def __init__(self,  *args, **kwargs):
         self.isImageLock = kwargs.pop('isImageLock')
         self.res = kwargs.pop('res')
         kwargs['style'] = kwargs.setdefault('style', wx.NO_FULL_REPAINT_ON_RESIZE) | wx.NO_FULL_REPAINT_ON_RESIZE
@@ -121,8 +122,9 @@ class Client():
     def __init__(self):
         pass
 
-    def start(self, server_address, port = 9999):
+    def start(self, server_address, port = 9999, compression = True):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.compression = compression
         try:
             self.client_socket.connect((server_address, port))
             print(f'Connected to {server_address} on {port}')
@@ -138,11 +140,15 @@ class Client():
         :rtype: None
         """
         data = np_array.tostring()
+        
+        if self.compression:
+             data = bz2.compress(data, compresslevel=2)
 
         # Send message length first
         # using "i" cause "L" for unsigned long does not have the same
         # size on different systems (4 on raspberry pi!)
         message_size = struct.pack("i", len(data)) 
+        
 
         # Then send data
         self.client_socket.sendall(message_size + data)
@@ -197,7 +203,10 @@ class SLMdisplay:
         if (self.isImageLock):
             self.eventLock = threading.Lock()
             
-    def listen_port(self, port = 9999, check_image_size = False):
+    def listen_port(self, 
+                    port = 9999, 
+                    check_image_size = False,
+                    compression = True):
         """
         Liston to a port for data transmission.
         Update the SLM with the array transmitted.
@@ -236,6 +245,9 @@ class SLMdisplay:
 
             frame_data = data[:msg_size]
             data = data[msg_size:]
+            
+            if compression:
+                data = bz2.decompress(data)
 
             # Extract frame
             print('Received image')
