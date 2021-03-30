@@ -192,7 +192,7 @@ class Client():
         ----------
         arr : array_like
             Numpy array to send to the server.
-        timeout : int, default 10
+        timeout : float, default 10
             Timeout in seconds.
         retries : int, default 2
             Number of times to try sending data if an error occurs.
@@ -330,8 +330,13 @@ class SLMdisplay:
         Update the SLM monitor with the supplied array.
         Note that the array is not the same size as the SLM resolution,
         the image will be deformed to fit the screen.
-        array: numpy array to display, should be the same size as the resolution of the SLM.
-        sleep: pause in seconds after displaying an image.
+        
+        Parameters
+        ----------
+        array : array_like
+            Numpy array to display, should be the same size as the resolution of the SLM.
+        sleep : float
+            Pause in seconds after displaying an image.
         """
         # create a wx.Image from the array
         h,w = array.shape[0], array.shape[1]
