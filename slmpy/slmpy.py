@@ -139,10 +139,10 @@ class Client():
         :return: None
         :rtype: None
         """
-        data = np_array.tostring()
+        data = np_array.tobytes()
         
         if self.compression:
-             data = bz2.compress(data, compresslevel=2)
+             data = bz2.compress(data)
 
         # Send message length first
         # using "i" cause "L" for unsigned long does not have the same
@@ -249,8 +249,8 @@ class SLMdisplay:
             data = data[msg_size:]
             
             if compression:
-                data = bz2.decompress(data)
-
+                frame_data = bz2.decompress(frame_data)
+                
             # Extract frame
             print('Received image')
             #image = pickle.loads(frame_data, encoding='latin1')
@@ -262,6 +262,7 @@ class SLMdisplay:
                 print(f'Expected {resX*resY}, received: {len(image)}')
                 client_connection.sendall(b'err')
                 continue
+                
             if time.time()-t0 > timeout:
                 print('Timeout!')
                 client_connection.sendall(b'err')
