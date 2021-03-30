@@ -16,6 +16,7 @@ import time
 import socket
 import struct
 import bz2
+import zlib
 
 
 EVT_NEW_IMAGE = wx.PyEventBinder(wx.NewEventType(), 0)
@@ -122,7 +123,7 @@ class Client():
     def __init__(self):
         pass
 
-    def start(self, server_address, port = 9999, compression = True):
+    def start(self, server_address, port = 9999, compression = 'zlib'):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.compression = compression
         try:
@@ -141,8 +142,10 @@ class Client():
         """
         data = np_array.tobytes()
         
-        if self.compression:
+        if self.compression == 'bz2':
              data = bz2.compress(data)
+        elif self.compression == 'zlib':
+             data = zlib.compress(data)
 
         # Send message length first
         # using "i" cause "L" for unsigned long does not have the same
@@ -206,7 +209,7 @@ class SLMdisplay:
     def listen_port(self, 
                     port = 9999, 
                     check_image_size = False,
-                    compression = True,
+                    compression = 'zlib',
                     timeout = 10.):
         """
         Liston to a port for data transmission.
@@ -248,8 +251,10 @@ class SLMdisplay:
             frame_data = data[:msg_size]
             data = data[msg_size:]
             
-            if compression:
+            if compression == 'bz2':
                 frame_data = bz2.decompress(frame_data)
+            elif compression == 'zlib':
+                frame_data = zlib.decompress(frame_data)
                 
             # Extract frame
             print('Received image')
