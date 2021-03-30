@@ -129,6 +129,19 @@ class Client():
         pass
 
     def start(self, server_address, port = 9999, compression = 'zlib'):
+        """
+        Parameters
+        ----------
+        server_address : string
+            Address or network name of the server to connect to.
+            Example: '192.168.0.100' / 'localhost'
+        port : int, default 9999
+            Port number of the listening socket on the server.
+        compression : string, default 'zlib'
+            Compression algorithm to use before sending the data to the client.
+            Can be 'zlib', 'gzip', 'bz2' or None for no compression.
+            If the compression is not recognized, performs no compression.
+        """
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.compression = compression
         try:
@@ -138,12 +151,14 @@ class Client():
             print(f'Connection to {server_address} on port {port} failed: {e}')
             return
 
-    def send_numpy_array(self, np_array):
+    def _send_numpy_array(self, np_array):
         """
-        :param np_array: Numpy array to send to the listening socket
-        :type np_array: ndarray
-        :return: None
-        :rtype: None
+        Send a numpy array to the connected socket.
+        
+        Parameters
+        ----------
+        np_array : array_like
+            Numpy array to send to the listening socket.
         """
         data = np_array.tobytes()
         
@@ -164,13 +179,23 @@ class Client():
         self.client_socket.sendall(message_size + data)
         
     def sendArray(self, arr, timeout = 10):
+        """
+        Send a numpy array to the connected socket.
+        
+        Parameters
+        ----------
+        arr : array_like
+            Numpy array to send to the server.
+        timeout : int, default 10
+            Timeout in seconds.
+        """
         if not isinstance(arr, np.ndarray):
             print('Not a valid numpy image')
             return
         if not arr.dtype == np.uint8:
             print('Numpy array should be of uint8 type')
 
-        self.send_numpy_array(arr)
+        self._send_numpy_array(arr)
         print('Waiting for reply from the server')
 
         t0 = time.time()
@@ -186,11 +211,6 @@ class Client():
             elif time.time()-t0 > timeout:
                 print('Timeout reached.')
                 return -1
-            
-        
-    def stopServer(self):
-        time.sleep(0.5)
-        self.client_socket.sendall(b'\r')
         
     def close(self):
         self.stopServer()
@@ -219,7 +239,7 @@ class SLMdisplay:
                     compression = 'zlib',
                     timeout = 10.):
         """
-        Liston to a port for data transmission.
+        Listen to a port for data transmission.
         Update the SLM with the array transmitted.
         Use a `Client` abject to send arrays from a client. 
         
