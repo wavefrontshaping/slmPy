@@ -12,7 +12,6 @@ except ImportError:
     raise ImportError("The wxPython module is required to run this program.")
 import threading
 import numpy as np
-from numpy.typing import ArrayLike
 import time
 import socket
 import struct
@@ -130,18 +129,18 @@ class Client():
         pass
 
     def start(self, 
-              server_address: string, 
+              server_address: str, 
               port: int = 9999, 
-              compression: string = 'zlib'):
+              compression: str = 'zlib'):
         """
         Parameters
         ----------
-        server_address : string
+        server_address : str
             Address or network name of the server to connect to.
             Example: '192.168.0.100' / 'localhost'
         port : int, default 9999
             Port number of the listening socket on the server.
-        compression : string, default 'zlib'
+        compression : str, default 'zlib'
             Compression algorithm to use before sending the data to the client.
             Can be 'zlib', 'gzip', 'bz2' or None for no compression.
             If the compression is not recognized, performs no compression.
