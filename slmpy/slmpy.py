@@ -12,6 +12,7 @@ except ImportError:
     raise ImportError("The wxPython module is required to run this program.")
 import threading
 import numpy as np
+from numpy.typing import ArrayLike
 import time
 import socket
 import struct
@@ -61,7 +62,7 @@ class SLMframe(wx.Frame):
         self.ShowFullScreen(not self.IsFullScreen(), wx.FULLSCREEN_ALL)
         self.SetFocus()
         
-    def SetMonitor(self, monitor):
+    def SetMonitor(self, monitor: int):
         if (monitor < 0 or monitor > wx.Display.GetCount()-1):
             raise ValueError('Invalid monitor (monitor %d).' % monitor)
         self._x0, self._y0, self._resX, self._resY = wx.Display(monitor).GetGeometry()
@@ -100,7 +101,7 @@ class SLMwindow(wx.Window):
 #         dc = wx.PaintDC(self)
 #         dc.DrawBitmap(self._Buffer,0,0)
  
-    def OnSize(self,event):
+    def OnSize(self, event):
         # The Buffer init is done here, to make sure the buffer is always
         # the same size as the Window
         Size = self.GetClientSize()
@@ -129,9 +130,9 @@ class Client():
         pass
 
     def start(self, 
-              server_address, 
-              port = 9999, 
-              compression = 'zlib'):
+              server_address: string, 
+              port: int = 9999, 
+              compression: string = 'zlib'):
         """
         Parameters
         ----------
@@ -182,9 +183,9 @@ class Client():
         self.client_socket.sendall(message_size + data)
         
     def sendArray(self, 
-                  arr, 
-                  timeout = 10,
-                  retries = 2):
+                  arr: np.ndarray, 
+                  timeout: float = 10,
+                  retries: int = 2):
         """
         Send a numpy array to the connected socket.
         
