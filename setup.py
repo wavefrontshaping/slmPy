@@ -2,7 +2,7 @@ import setuptools
 # from packagename.version import Version
 
 setuptools.setup(name='slmpy',
-                 version='0.1.0',
+                 version='0.2.0',
                  description='Display images on a spatial light modulators.',
                  long_description=open('README.md').read().strip(),
                  author="Sebastien M. Popoff",
