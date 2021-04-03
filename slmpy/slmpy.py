@@ -168,7 +168,7 @@ class Client():
         if self.compression == 'bz2':
              data = bz2.compress(data)
         elif self.compression == 'zlib':
-             data = zlib.compress(data)
+             data = zlib.compress(data, level = 2)
         elif self.compression == 'gzip':
              data = gzip.compress(data)
 
@@ -224,7 +224,6 @@ class Client():
             return -1
         
     def close(self):
-        self.stopServer()
         self.client_socket.shutdown(1)
         self.client_socket.close()
         
