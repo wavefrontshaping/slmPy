@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-# connect via ssn and execute this lines
+# connect via ssn and execute these lines
 # git clone --branch network https://github.com/wavefrontshaping/slmPy.git
 # cd slmPy && bash rpi_server/install.sh
 
@@ -28,14 +28,13 @@ mkdir -p /home/pi/.config/autostart
 cp rpi_server/SLM.desktop /home/pi/.config/autostart/
 
 cd ..
-rm -rf slmPy
 
 echo "Deactivate screen blanking/sleep"
 sudo bash -c 'echo -e "\n[SeatDefaults]\nxserver-command=X -s 0 -dpms" >> /etc/lightdm/lightdm.conf'
 
-echo "Changing resolution to "$RESOLUTION
-export DISPLAY=:0
-xrandr --output HDMI-1 --mode $RESOLUTION
+#echo "Changing resolution to "$RESOLUTION
+#export DISPLAY=:0
+#xrandr --output HDMI-1 --mode $RESOLUTION
 
 echo "Rebooting"
 sudo reboot
