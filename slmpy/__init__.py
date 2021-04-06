@@ -1,1 +1,1 @@
-from .slmpy import SLMdisplay
+from .slmpy import SLMdisplay, Client

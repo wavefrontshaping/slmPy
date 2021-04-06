@@ -1,0 +1,10 @@
+# Changelog
+
+## [0.2.0] 
+### Added features
+- Add setup.py for installation
+- Added `SLMdisplay.listen_port` to behave as a server that listens to a given port and wait for images to display
+- Add `Client` class to communicate from a client to a remote computer using `listen_port`
+- Add compression to send images using TCP (bz2, gzip, and zlib)
+### Bug correction
+- Corrected `SLMdisplay,close()` that made it impossible to re-initialize the SLM after closing it.
