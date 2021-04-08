@@ -146,6 +146,7 @@ class Client():
             If the compression is not recognized, performs no compression.
         """
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.compression = compression
         try:
             self.client_socket.connect((server_address, port))
@@ -244,10 +245,11 @@ class SLMdisplay:
             self.eventLock = threading.Lock()
             
     def listen_port(self, 
-                    port = 9999, 
-                    check_image_size = False,
-                    compression = 'zlib',
-                    timeout = 10.):
+                    port: int = 9999, 
+                    check_image_size: bool = False,
+                    compression: str = 'zlib',
+                    timeout: float = 10.,
+                    buffer_size: int = 65536):
         """
         Listen to a port for data transmission.
         Update the SLM with the array transmitted.
@@ -261,9 +263,17 @@ class SLMdisplay:
             If `check_image_size` is True, an image that does not fit
             the resolution of the SLM will not be displayed and an 
             error will be returned to the client.
-
+        compression : string
+            Compression protocol of the data.
+            Should be None, 'zlib', 'bz2' or 'gzip'
+        timeout :  float
+            Timeout in seconds.
+        buffer_size : int
+            Size of the buffer to receive data.
+            Should be large enough to reduce latency for high resolutions.
         """
         server_socket=socket.socket() 
+        server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         server_socket.bind(('',port))
         server_socket.listen(1)
         print(f'waiting for a connection on port {port}')
@@ -283,7 +293,7 @@ class SLMdisplay:
             msg_size = struct.unpack("i", packed_msg_size)[0]
             # Retrieve all data based on message size
             while len(data) < msg_size:
-                data += client_connection.recv(4096)
+                data += client_connection.recv(buffer_size)
 
             frame_data = data[:msg_size]
             data = data[msg_size:]
