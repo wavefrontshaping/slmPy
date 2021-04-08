@@ -281,7 +281,6 @@ class SLMdisplay:
         print(f'connected to {client_address[0]}')      
         
         payload_size = struct.calcsize("i") 
-        print(f'Payload size = {payload_size}') 
         while True:
             data=b''
             t0 = time.time()
@@ -294,9 +293,15 @@ class SLMdisplay:
             # Retrieve all data based on message size
             while len(data) < msg_size:
                 data += client_connection.recv(buffer_size)
+                if time.time()-t0 > timeout:
+                    print('Timeout!')
+                    client_connection.sendall(b'err')
+                    continue
 
             frame_data = data[:msg_size]
             data = data[msg_size:]
+            
+            t0 = time.time()
             
             if compression == 'bz2':
                 frame_data = bz2.decompress(frame_data)
@@ -304,11 +309,15 @@ class SLMdisplay:
                 frame_data = zlib.decompress(frame_data)
             elif compression == 'gzip':
                 frame_data = gzip.decompress(frame_data)
-                
+            
+            print(f'decompressed: {time.time()-t0}')
+            
             # Extract frame
             print('Received image')
             #image = pickle.loads(frame_data, encoding='latin1')
             image = np.frombuffer(frame_data, dtype = np.uint8)
+            
+            print(f'to numpy: {time.time()-t0}')
 
             resX, resY = self.vt.frame._resX, self.vt.frame._resY
             if check_image_size and not len(image) == resY*resX:
@@ -317,10 +326,7 @@ class SLMdisplay:
                 client_connection.sendall(b'err')
                 continue
                 
-            if time.time()-t0 > timeout:
-                print('Timeout!')
-                client_connection.sendall(b'err')
-                continue
+
             
             image = image.reshape([resY,resX])
             print('Updating SLM')
