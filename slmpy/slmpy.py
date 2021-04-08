@@ -131,7 +131,10 @@ class Client():
     def start(self, 
               server_address: str, 
               port: int = 9999, 
-              compression: str = 'zlib'):
+              compression: str = 'zlib',
+              compression_level: int = -1,
+              wait_for_reply: bool = True
+             ):
         """
         Parameters
         ----------
@@ -144,10 +147,20 @@ class Client():
             Compression algorithm to use before sending the data to the client.
             Can be 'zlib', 'gzip', 'bz2' or None for no compression.
             If the compression is not recognized, performs no compression.
+        compression_level: int, default -1
+            Level of compression. Depends on the compression algorithm.
+        wait_for_reply: bool, default True
+            If True, wait for the server confirmation before returning when sendArray is called.
+            The server should use the argument `comfirm` in `listen_port()` with the same value.
+            Be careful, some images can be missed!
         """
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.compression = compression
+        if compression_level == -1 and compression == 'bz2':
+            compression_level = 9
+        self.compression_level = compression_level
+        self.wait_for_reply = wait_for_reply
         try:
             self.client_socket.connect((server_address, port))
             print(f'Connected to {server_address} on {port}')
@@ -167,11 +180,14 @@ class Client():
         data = np_array.tobytes()
         
         if self.compression == 'bz2':
-             data = bz2.compress(data)
+             data = bz2.compress(data, 
+                                 compresslevel = self.compression_level)
         elif self.compression == 'zlib':
-             data = zlib.compress(data, level = 2)
+             data = zlib.compress(data, 
+                                  level = self.compression_level)
         elif self.compression == 'gzip':
-             data = gzip.compress(data)
+             data = gzip.compress(data, 
+                                  compresslevel = self.compression_level)
 
         # Send message length first
         # using "i" cause "L" for unsigned long does not have the same
@@ -204,23 +220,27 @@ class Client():
         if not arr.dtype == np.uint8:
             print('Numpy array should be of uint8 type')
 
+
         for retry in range(retries):
             self._send_numpy_array(arr)
             t0 = time.time()
             if retry:
                 print('Retrying')
-            while True:
-                buffer = self.client_socket.recv(128)
-                if buffer and buffer.decode() == 'done':
-                    print('Data transmitted')
-                    return 1
-                elif buffer and buffer.decode() == 'err':
-                    print('Error. Data not transmitted')
-                    print('Wrong image size?')
-                    break
-                elif time.time()-t0 > timeout:
-                    print('Timeout reached.')
-                    break
+            if self.wait_for_reply:
+                while True:
+                    buffer = self.client_socket.recv(128)
+                    if buffer and buffer.decode() == 'done':
+                        print('Data transmitted')
+                        return 1
+                    elif buffer and buffer.decode() == 'err':
+                        print('Error. Data not transmitted')
+                        print('Wrong image size?')
+                        break
+                    elif time.time()-t0 > timeout:
+                        print('Timeout reached.')
+                        break
+            else:
+                return 1
         else:
             return -1
         
@@ -249,7 +269,8 @@ class SLMdisplay:
                     check_image_size: bool = False,
                     compression: str = 'zlib',
                     timeout: float = 10.,
-                    buffer_size: int = 65536):
+                    buffer_size: int = 65536,
+                    comfirm: bool = True):
         """
         Listen to a port for data transmission.
         Update the SLM with the array transmitted.
@@ -257,20 +278,22 @@ class SLMdisplay:
         
         Parameters
         ----------
-        port : int
+        port : int, default 9999
             The port to listen to and receive the data from.
-        check_image_size : bool
+        check_image_size : bool, default False
             If `check_image_size` is True, an image that does not fit
             the resolution of the SLM will not be displayed and an 
             error will be returned to the client.
-        compression : string
+        compression : string, default 'zlib'
             Compression protocol of the data.
             Should be None, 'zlib', 'bz2' or 'gzip'
-        timeout :  float
+        timeout :  float, default 10.
             Timeout in seconds.
-        buffer_size : int
+        buffer_size : int, default 65536
             Size of the buffer to receive data.
             Should be large enough to reduce latency for high resolutions.
+        comfirm: bool, default True
+            If True send a confirmation signal to the client.
         """
         server_socket=socket.socket() 
         server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
