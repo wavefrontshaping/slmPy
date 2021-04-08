@@ -1,9 +1,9 @@
 #!/usr/bin/bash
 # connect via ssn and execute these lines
-# git clone --branch network https://github.com/wavefrontshaping/slmPy.git
+# git clone https://github.com/wavefrontshaping/slmPy.git
 # cd slmPy && bash rpi_server/install.sh
 
-RESOLUTION="800x600"
+# RESOLUTION="800x600"
 
 echo "Installing Python pip if not present"
 sudo apt-get install python3-pip -y
