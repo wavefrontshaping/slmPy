@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 # connect via ssn and execute these lines
-# git clone https://github.com/wavefrontshaping/slmPy.git
-# cd slmPy && bash rpi_server/install.sh
+git clone https://github.com/wavefrontshaping/slmPy.git
+cd slmPy #&& bash rpi_server/install.sh
 
 # RESOLUTION="800x600"
 
@@ -15,7 +15,6 @@ sudo apt install python3-wxgtk4.0 -y
 
 echo "Installing wxPython"
 sudo python3.7 -m pip install wxPython
-
 
 echo "Installing SlmPy"
 sudo python3.7 setup.py install 
