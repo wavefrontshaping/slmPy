@@ -237,7 +237,7 @@ class Client():
         
         # compress data according to compression parameters set at initialization
         data = self.compress(np_array)
-        print(f'Compression = {len(data)}/{np_array.size} = {1.-len(data)/np_array.size*1/100:.3f}%')
+        print(f'Compression = {len(data)}/{np_array.size} = {100.-len(data)/np_array.size*100:.3f}%')
 
         # then send data
         self.client.send_data(data)
@@ -337,14 +337,7 @@ class SLMdisplay:
         comfirm: bool, default True
             If True send a confirmation signal to the client.
         """
-        if protocol == 'TCP':
-#             server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#             server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-#             server_socket.bind(('',port))
-#             server_socket.listen(1)
-#             print(f'waiting for a connection on port {port}')
-#             client_connection,client_address=server_socket.accept()
-#             print(f'connected to {client_address[0]}')     
+        if protocol == 'TCP': 
             self.server = tcp_server(port = port)
             self.server.run()
         elif protocol == 'UDP':
@@ -352,38 +345,10 @@ class SLMdisplay:
             self.server.run()
         else:
             raise UnknownProtocol(protocol)
-            
-#             receive = lambda x: client_connection.recv(x)
-#             send = lambda x: client_connection.sendall(x)
-            
-            
-#             print(f'payload_size = {payload_size}')
+
         print('Waiting to receive data')
+        
         while True:
-            
-#                 data=b''
-
-#                 while len(data) < payload_size:
-#                     data += self.server.receive(PACKET_SIZE)
-# #                     print(f'data length = {len(data)}')
-
-#                 t0 = time.time()
-#                 packed_msg_size = data[:payload_size]
-#                 data = data[payload_size:]
-#                 msg_size = struct.unpack("i", packed_msg_size)[0]
-#                 # Retrieve all data based on message size
-#                 print(f'Waiting for data of size {msg_size}')
-#                 while len(data) < msg_size:      
-#                     data += self.server.receive(buffer_size)
-#                     if time.time()-t0 > timeout:
-#                         print('Timeout!')
-#                         print(f'{time.time()-t0:.3f}')
-#                         self.server.send(b'err')
-#                         continue
-
-#                 frame_data = data[:msg_size]
-#                 data = data[msg_size:]
-
             frame_data = self.server.get_data(
                                         timeout = timeout
             )
@@ -400,7 +365,6 @@ class SLMdisplay:
 
             # Extract frame
             print('Received image')
-            #image = pickle.loads(frame_data, encoding='latin1')
             image = np.frombuffer(frame_data, dtype = np.uint8)
 
             resX, resY = self.vt.frame._resX, self.vt.frame._resY
@@ -415,76 +379,10 @@ class SLMdisplay:
                 
             print('Updating SLM')
             self.updateArray(image, sleep = 0.)
-            print('Done')
             self.server.send(b'done')
-            
-#         elif protocol == 'UDP':
-#             server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-#             server_socket.bind(("", port))
-#             receive = lambda x: server_socket.recvfrom(x)[0]
-            
-#             while True:
-                
-#                 t0 = time.time()
-#                 packed_msg_size, address = server_socket.recvfrom(PACKET_SIZE)
-#                 msg_size = struct.unpack("i", packed_msg_size)[0]
-                
-#                 n_chunks = ceil(msg_size/PACKET_SIZE)
-#                 print(packed_msg_size, "OO")
-                
-#                 data=b''
-#                 for _ in range(n_chunks):
-#                     data += receive(PACKET_SIZE)
-#                     if time.time()-t0 > timeout:
-#                         print('Timeout!')
-#                         server_socket.sendto(b'err', address)
-#                         continue
-
-#                     print(data, ' >>'*10)
-                
-                
-#                 frame_data = data[:msg_size]
-                
-#                 print(len(frame_data))
-#                 print(msg_size)
-#                 print('=='*20)
-                
-#                 if compression == 'bz2':
-#                     frame_data = bz2.decompress(frame_data)
-#                 elif compression == 'zlib':
-#                     frame_data = zlib.decompress(frame_data)
-#                 elif compression == 'gzip':
-#                     frame_data = gzip.decompress(frame_data)
-
-#                 # Extract frame
-#                 print('Received image')
-#                 #image = pickle.loads(frame_data, encoding='latin1')
-#                 image = np.frombuffer(frame_data, dtype = np.uint8)
-
-#                 resX, resY = self.vt.frame._resX, self.vt.frame._resY
-#                 if check_image_size and not len(image) == resY*resX:
-#                     print('Buffer size does not match image size')
-#                     print(f'Expected {resX*resY}, received: {len(image)}')
-#                     server_socket.sendto(b'err', address)
-#                     continue
-
-
-
-#                 image = image.reshape([resY,resX])
-#                 print('Updating SLM')
-#                 self.updateArray(image, sleep = 0.)
-#                 server_socket.sendto(b'done', address)
-
-        
-#         server_socket=socket.socket() 
-#         server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-        
-        
-        
+            print('Done')
             
             
-
-
         client_connection.close()
         server_socket.close()
         
