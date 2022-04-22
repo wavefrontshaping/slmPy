@@ -113,7 +113,7 @@ class SLMwindow(wx.Window):
     def UpdateImage(self, event):
         self.eventLock = event.eventLock
         self.img = event.img
-        self.Refresh()
+        self.Refresh(eraseBackground=False)
         
         self.ReleaseEventLock()
         
